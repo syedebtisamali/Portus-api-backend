@@ -53,6 +53,7 @@ app.config["SESSION_COOKIE_HTTPONLY"] = True
 app.config["SESSION_COOKIE_SECURE"] = os.environ.get("SESSION_COOKIE_SECURE", "false").lower() == "true"
 app.config["SESSION_COOKIE_SAMESITE"] = os.environ.get("SESSION_COOKIE_SAMESITE", "Lax")
 app.config["SESSION_COOKIE_PATH"] = "/"
+app.config["SESSION_REFRESH_EACH_REQUEST"] = True
 
 # Local dev: frontend runs on http://127.0.0.1:5500, backend on :5050 — different
 # ports count as different origins, so CORS + credentials must be explicit.
@@ -171,21 +172,36 @@ def home():
     return "Portus API is running."
 
 
-@app.route("/login", methods=["POST"])
+@app.route("/login", methods=["POST", "OPTIONS"])
 def login():
+    if request.method == "OPTIONS":
+        response = app.make_response("")
+        response.headers["Access-Control-Allow-Origin"] = request.headers.get("Origin", FRONTEND_ORIGIN)
+        response.headers["Access-Control-Allow-Credentials"] = "true"
+        response.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
+        response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
+        return response
+
     data = request.get_json(silent=True) or {}
     username = (data.get("username") or "").strip()
     password = data.get("password") or ""
 
     user = users_col.find_one({"USERNAME": username})
     if not user or user.get("PASSWORD") != password or not user.get("IS_ACTIVE", True):
-        return "<h1>Login Failed</h1><p>Invalid credentials.</p>", 401
+        response = jsonify({"error": "Invalid credentials."})
+        response.status_code = 401
+        response.headers["Access-Control-Allow-Origin"] = request.headers.get("Origin", FRONTEND_ORIGIN)
+        response.headers["Access-Control-Allow-Credentials"] = "true"
+        return response
 
     session["username"] = username
     session["role"] = user.get("ROLE", "user")
     users_col.update_one({"USERNAME": username}, {"$set": {"LAST_ACTIVE": ts()}})
 
-    return render_dashboard()
+    response = jsonify({"success": True, "username": username, "role": session["role"]})
+    response.headers["Access-Control-Allow-Origin"] = request.headers.get("Origin", FRONTEND_ORIGIN)
+    response.headers["Access-Control-Allow-Credentials"] = "true"
+    return response
 
 
 @app.route("/logout", methods=["GET", "POST"])
