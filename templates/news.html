@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% set active_tab = 'news' %}
+{% block title %}News{% endblock %}
+{% block content %}
+<h1 class="text-2xl font-extrabold mb-6">News & Bulletins</h1>
+
+{% if role == 'admin' %}
+<div class="bg-white rounded-2xl p-5 shadow-sm mb-6">
+  <h3 class="font-bold mb-3">Publish a Post</h3>
+  <input id="news-title" placeholder="Title" class="w-full border border-periwinkle rounded-lg px-3 py-2 mb-2">
+  <textarea id="news-content" placeholder="Content" rows="3" class="w-full border border-periwinkle rounded-lg px-3 py-2 mb-2"></textarea>
+  <button onclick="publishNews()" class="bg-royal hover:bg-royaldark text-white font-semibold px-4 py-2 rounded-lg">Publish</button>
+</div>
+{% endif %}
+
+<div class="space-y-4">
+  {% for p in posts %}
+  <div class="bg-white rounded-2xl p-5 shadow-sm border-l-4 border-royal">
+    <div class="flex justify-between items-start gap-2 flex-wrap">
+      <h3 class="font-bold text-lg">{{ p.TITLE }}</h3>
+      {% if role == 'admin' %}<button onclick="deleteNews('{{ p._key }}')" class="text-xs bg-red-500 text-white font-semibold px-2 py-1 rounded">Delete</button>{% endif %}
+    </div>
+    <p class="text-charcoal/80 mt-2">{{ p.CONTENT }}</p>
+    <p class="text-xs text-charcoal/50 mt-3">By {{ p.AUTHOR }} &middot; {{ p.CREATED_AT }}</p>
+  </div>
+  {% else %}
+  <p class="italic text-charcoal/50">No news posted yet.</p>
+  {% endfor %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+async function publishNews() {
+  const body = { title: document.getElementById('news-title').value, content: document.getElementById('news-content').value };
+  const res = await apiPost('news/create', body);
+  if (res) loadPage('news');
+}
+async function deleteNews(key) {
+  if (!confirm('Delete this post?')) return;
+  const res = await apiPost(`news/${key}/delete`, {});
+  if (res) loadPage('news');
+}
+</script>
+{% endblock %}

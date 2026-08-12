@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% set active_tab = 'dashboard' %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<h1 class="text-2xl font-extrabold mb-1">Welcome back, {{ user_name }}</h1>
+<p class="text-charcoal/60 mb-6">Here's what's happening in your community.</p>
+
+<div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+  <div class="bg-white rounded-2xl p-5 border-t-4 border-royal shadow-sm">
+    <p class="text-sm text-charcoal/60">Attendance Rate</p>
+    <p class="text-3xl font-extrabold text-royal">{{ stats.attendance_rate }}%</p>
+  </div>
+  <div class="bg-white rounded-2xl p-5 border-t-4 border-royal shadow-sm">
+    <p class="text-sm text-charcoal/60">Badges Earned</p>
+    <p class="text-3xl font-extrabold text-royal">{{ stats.badge_count }}</p>
+  </div>
+  <div class="bg-white rounded-2xl p-5 border-t-4 border-royal shadow-sm">
+    <p class="text-sm text-charcoal/60">Contributions Logged</p>
+    <p class="text-3xl font-extrabold text-royal">{{ stats.contribution_count }}</p>
+  </div>
+</div>
+
+{% if role == 'admin' and admin_stats %}
+<div class="bg-royal rounded-2xl p-6 text-white mb-8">
+  <h2 class="font-bold text-lg mb-4">Organization-wide Analytics</h2>
+  <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+    <div class="bg-white/10 rounded-xl p-4">
+      <p class="text-sm text-periwinkle">Total Members</p>
+      <p class="text-2xl font-extrabold">{{ admin_stats.total_users }}</p>
+    </div>
+    <div class="bg-white/10 rounded-xl p-4">
+      <p class="text-sm text-periwinkle">Applications Under Review</p>
+      <p class="text-2xl font-extrabold">{{ admin_stats.total_applications }}</p>
+    </div>
+    <div class="bg-white/10 rounded-xl p-4">
+      <p class="text-sm text-periwinkle">Open Reports</p>
+      <p class="text-2xl font-extrabold">{{ admin_stats.total_reports }}</p>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<div class="bg-white rounded-2xl p-6 shadow-sm">
+  <h2 class="font-bold text-lg mb-4">Your Badges</h2>
+  {% if badges %}
+  <div class="flex flex-wrap gap-3">
+    {% for b in badges %}
+    <div class="bg-periwinkle/40 border border-periwinkle rounded-xl px-4 py-3 min-w-[140px]">
+      <p class="font-semibold text-sm">{{ b.name }}</p>
+      <p class="text-xs text-charcoal/60">{{ b.description }}</p>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <p class="text-charcoal/50 italic">No badges earned yet.</p>
+  {% endif %}
+</div>
+{% endblock %}

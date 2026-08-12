@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% set active_tab = 'contributions' %}
+{% block title %}Contributions{% endblock %}
+{% block content %}
+<h1 class="text-2xl font-extrabold mb-6">Contributions Log</h1>
+
+{% if role != 'admin' %}
+<div class="bg-white rounded-2xl p-5 shadow-sm mb-6">
+  <h3 class="font-bold mb-3">Log a Contribution</h3>
+  <input id="c-title" placeholder="Title" class="w-full border border-periwinkle rounded-lg px-3 py-2 mb-2">
+  <textarea id="c-desc" placeholder="Description" rows="2" class="w-full border border-periwinkle rounded-lg px-3 py-2 mb-2"></textarea>
+  <input id="c-link" placeholder="Link (PR / Repo / Doc) — optional" class="w-full border border-periwinkle rounded-lg px-3 py-2 mb-2">
+  <button onclick="submitContribution()" class="bg-royal hover:bg-royaldark text-white font-semibold px-4 py-2 rounded-lg">Submit</button>
+</div>
+{% endif %}
+
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+  {% for c in items %}
+  <div class="bg-white rounded-2xl p-5 shadow-sm border-l-4 border-royal">
+    <div class="flex justify-between items-start gap-2">
+      <h3 class="font-bold">{{ c.TITLE }}</h3>
+      <span class="px-2 py-0.5 rounded-full text-xs font-bold shrink-0 {{ 'bg-green-100 text-green-700' if c.STATUS=='Approved' else ('bg-red-100 text-red-700' if c.STATUS=='Rejected' else 'bg-yellow-100 text-yellow-700') }}">{{ c.STATUS }}</span>
+    </div>
+    {% if role == 'admin' %}<p class="text-xs text-charcoal/50 mt-1">{{ c.member_name }}</p>{% endif %}
+    <p class="text-sm text-charcoal/70 mt-2">{{ c.DESCRIPTION }}</p>
+    {% if c.LINK %}<a href="{{ c.LINK }}" target="_blank" class="text-xs text-royal font-semibold underline">View Link</a>{% endif %}
+    <p class="text-xs text-charcoal/40 mt-2">{{ c.SUBMITTED_AT }}</p>
+    {% if role == 'admin' %}
+    <div class="flex gap-1 mt-3">
+      <button onclick="reviewContribution('{{ c.member_name }}','{{ c._key }}','Approved')" class="bg-green-600 text-white text-xs font-semibold px-2 py-1 rounded">Approve</button>
+      <button onclick="reviewContribution('{{ c.member_name }}','{{ c._key }}','Rejected')" class="bg-red-500 text-white text-xs font-semibold px-2 py-1 rounded">Reject</button>
+      <button onclick="deleteContribution('{{ c.member_name }}','{{ c._key }}')" class="bg-charcoal text-white text-xs font-semibold px-2 py-1 rounded">Delete</button>
+    </div>
+    {% endif %}
+  </div>
+  {% else %}
+  <p class="italic text-charcoal/50">No contributions logged yet.</p>
+  {% endfor %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+async function submitContribution() {
+  const body = {
+    title: document.getElementById('c-title').value,
+    description: document.getElementById('c-desc').value,
+    link: document.getElementById('c-link').value,
+  };
+  const res = await apiPost('contributions/submit', body);
+  if (res) loadPage('contributions');
+}
+async function reviewContribution(username, key, status) {
+  const res = await apiPost(`contributions/${username}/${key}/review`, { status });
+  if (res) loadPage('contributions');
+}
+async function deleteContribution(username, key) {
+  if (!confirm('Delete this contribution?')) return;
+  const res = await apiPost(`contributions/${username}/${key}/delete`, {});
+  if (res) loadPage('contributions');
+}
+</script>
+{% endblock %}
