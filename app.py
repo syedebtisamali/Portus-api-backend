@@ -54,7 +54,21 @@ app.secret_key = os.environ.get("SECRET_KEY", "portus_dev_secret_change_me")
 # ports count as different origins, so CORS + credentials must be explicit.
 FRONTEND_ORIGIN = os.environ.get("FRONTEND_ORIGIN", "http://127.0.0.1:5500")
 API_BASE = os.environ.get("API_BASE", "http://127.0.0.1:5050")
-CORS(app, supports_credentials=True, origins=[FRONTEND_ORIGIN], allow_headers=["Content-Type"])
+ALLOWED_ORIGINS = [
+    origin.strip()
+    for origin in os.environ.get(
+        "ALLOWED_ORIGINS",
+        f"{FRONTEND_ORIGIN},{API_BASE},https://portus-dashboard.netlify.app,https://portus-api-backend.vercel.app",
+    ).split(",")
+    if origin.strip()
+]
+CORS(
+    app,
+    supports_credentials=True,
+    origins=ALLOWED_ORIGINS,
+    allow_headers=["Content-Type", "Authorization"],
+    methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+)
 
 MONGO_URI = os.environ.get("MONGO_URI", "mongodb://localhost:27017")
 client = MongoClient(MONGO_URI)
