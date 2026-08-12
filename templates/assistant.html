@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+{% set active_tab = 'assistant' %}
+{% block title %}AI Assistant{% endblock %}
+{% block content %}
+<h1 class="text-2xl font-extrabold mb-1">Personal AI Assistant</h1>
+<p class="text-charcoal/60 mb-6">Ask about attendance, applications, badges, or anything else on your mind.</p>
+
+<div class="bg-white rounded-2xl shadow-sm max-w-2xl mx-auto flex flex-col h-[65vh] overflow-hidden">
+  <div id="chat-log" class="flex-1 overflow-y-auto p-4 space-y-3"></div>
+  <div class="border-t border-periwinkle/20 p-3 flex gap-2">
+    <input id="chat-input" placeholder="Type a message..." autocomplete="off"
+      class="flex-1 border border-periwinkle rounded-lg px-3 py-2 text-sm"
+      onkeydown="if(event.key==='Enter') sendChat();">
+    <button onclick="sendChat()" id="chat-send-btn"
+      class="bg-royal hover:bg-royaldark disabled:opacity-50 text-white font-semibold px-4 py-2 rounded-lg text-sm">Send</button>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+/* --------------------------------------------------------------------
+   Cohere-powered assistant — client-side sample integration
+   ----------------------------------------------------------------------
+   This is the sample key you shared, wired in exactly as tested.
+   ⚠️ Heads up: any key placed in front-end JS is readable by anyone who
+   views this page's source, so this is fine for local testing but not
+   for production. When you're ready to go live, move this fetch() into
+   the existing `POST /assistant/message` Flask route (it's already a
+   placeholder in app.py) and keep the real key server-side only.
+   ------------------------------------------------------------------------ */
+const COHERE_API_KEY = "cohere_RhSbnXWgrKsymzkMH62xWiGp7i4NlAkXpjdWUN6M4BgN0L";
+const COHERE_URL = "https://api.cohere.ai/v2/chat";
+const ASSISTANT_NAME = {{ user_name | tojson }};
+
+let assistantHistory = [];
+
+function makePfp(sender) {
+  const el = document.createElement('div');
+  el.className = 'w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 ' +
+    (sender === 'user'
+      ? 'bg-royal text-white'
+      : 'bg-periwinkle/15 border border-periwinkle/40 text-periwinkle');
+  el.textContent = sender === 'user' ? 'ME' : 'AI';
+  return el;
+}
+
+function addBubble(text, sender) {
+  const log = document.getElementById('chat-log');
+  const row = document.createElement('div');
+  row.className = 'flex gap-2 max-w-[85%] ' + (sender === 'user' ? 'flex-row-reverse ml-auto' : '');
+
+  const bubble = document.createElement('div');
+  bubble.className = 'rounded-xl px-4 py-2 text-sm leading-relaxed ' +
+    (sender === 'user'
+      ? 'bg-royal text-white rounded-br-sm'
+      : 'bg-periwinkle/10 border border-periwinkle/25 rounded-bl-sm');
+  bubble.textContent = text;
+
+  row.appendChild(makePfp(sender));
+  row.appendChild(bubble);
+  log.appendChild(row);
+  log.scrollTop = log.scrollHeight;
+  return bubble;
+}
+
+async function sendChat() {
+  const input = document.getElementById('chat-input');
+  const btn = document.getElementById('chat-send-btn');
+  const text = input.value.trim();
+  if (!text || btn.disabled) return;
+
+  addBubble(text, 'user');
+  input.value = '';
+  btn.disabled = true;
+
+  const thinkingBubble = addBubble('Thinking…', 'bot');
+
+  const requestBody = {
+    model: "command-a-03-2025",
+    messages: [
+      {
+        role: "system",
+        content: "You are the Portus Assistant, a concise and friendly guide for " + ASSISTANT_NAME +
+          " inside the Portus community dashboard. Keep replies short and practical."
+      },
+      ...assistantHistory,
+      { role: "user", content: text }
+    ]
+  };
+
+  try {
+    const response = await fetch(COHERE_URL, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${COHERE_API_KEY}`,
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify(requestBody)
+    });
+
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.message || 'API connection failed.');
+
+    const botText = data.message.content[0].text;
+    thinkingBubble.textContent = botText;
+
+    assistantHistory.push({ role: 'user', content: text });
+    assistantHistory.push({ role: 'assistant', content: botText });
+    if (assistantHistory.length > 10) assistantHistory.splice(0, 2);
+
+  } catch (err) {
+    console.error('Assistant error:', err);
+    thinkingBubble.textContent = "Sorry, I couldn't reach the assistant: " + err.message;
+  } finally {
+    btn.disabled = false;
+    input.focus();
+  }
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  addBubble('Hi ' + ASSISTANT_NAME + ", how can I help you today?", 'bot');
+  document.getElementById('chat-input').focus();
+});
+</script>
+{% endblock %}

@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% set active_tab = 'applications' %}
+{% block title %}Applications{% endblock %}
+{% block content %}
+<div class="mb-8">
+  <h1 class="text-3xl font-extrabold text-white tracking-tight">Applications Hub</h1>
+  <p class="text-slate-400 text-sm mt-1">Manage and track organization requests</p>
+</div>
+
+{% if role != 'admin' %}
+<div class="glass-card animated-border rounded-2xl p-6 shadow-2xl mb-8 relative z-20">
+  <h3 class="font-bold text-lg text-white mb-4 flex items-center gap-2">
+    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-[#2B54EA]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+    </svg>
+    Submit New Application
+  </h3>
+  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+    <div>
+      <label class="block text-xs font-semibold text-slate-300 mb-1">Application Type</label>
+      <select id="app-type" class="w-full bg-slate-900/60 border border-slate-700/80 rounded-lg px-3 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-[#2B54EA] transition-all">
+        <option class="bg-slate-900">Leave</option>
+        <option class="bg-slate-900">Issue</option>
+        <option class="bg-slate-900">Role Transfer</option>
+        <option class="bg-slate-900">General</option>
+      </select>
+    </div>
+    <div>
+      <label class="block text-xs font-semibold text-slate-300 mb-1">Subject</label>
+      <input id="app-subject" placeholder="Brief subject line" class="w-full bg-slate-900/60 border border-slate-700/80 rounded-lg px-3 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-[#2B54EA] transition-all">
+    </div>
+  </div>
+  <div class="mb-4">
+    <label class="block text-xs font-semibold text-slate-300 mb-1">Statement</label>
+    <textarea id="app-statement" placeholder="Describe your request in detail..." rows="3" class="w-full bg-slate-900/60 border border-slate-700/80 rounded-lg px-3 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-[#2B54EA] transition-all"></textarea>
+  </div>
+  <button onclick="submitApplication()" class="ripple-btn bg-[#2B54EA] hover:bg-[#1E3FC4] text-white font-bold px-6 py-2.5 rounded-lg transition-all shadow-lg shadow-[#2B54EA]/30 cursor-pointer">
+    Submit Application
+  </button>
+</div>
+{% endif %}
+
+<div class="glass-card animated-border rounded-2xl shadow-2xl overflow-x-auto relative z-20">
+  <table class="w-full text-sm text-left border-collapse">
+    <thead class="bg-[#2B54EA]/20 text-white border-b border-slate-700/80">
+      <tr>
+        {% if role == 'admin' %}<th class="p-4 font-semibold">Applicant</th>{% endif %}
+        <th class="p-4 font-semibold">Type</th>
+        <th class="p-4 font-semibold">Subject</th>
+        <th class="p-4 font-semibold">Statement</th>
+        <th class="p-4 font-semibold">Status</th>
+        <th class="p-4 font-semibold">Submitted</th>
+        {% if role == 'admin' %}<th class="p-4 font-semibold">Action</th>{% endif %}
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-slate-800/60">
+      {% for a in apps %}
+      <tr class="hover:bg-slate-800/30 transition-colors align-top">
+        {% if role == 'admin' %}<td class="p-4 font-semibold text-white">{{ a.applicant_name }}</td>{% endif %}
+        <td class="p-4 text-slate-300">{{ a.TYPE }}</td>
+        <td class="p-4 font-semibold text-white">{{ a.SUBJECT }}</td>
+        <td class="p-4 max-w-xs text-slate-400 break-words">{{ a.STATEMENT }}</td>
+        <td class="p-4">
+          <span class="px-2.5 py-1 rounded-full text-xs font-bold shadow-sm 
+            {{ 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' if a.STATUS=='Approved' else ('bg-rose-500/20 text-rose-400 border border-rose-500/30' if a.STATUS=='Rejected' else 'bg-amber-500/20 text-amber-400 border border-amber-500/30') }}">
+            {{ a.STATUS }}
+          </span>
+        </td>
+        <td class="p-4 text-xs text-slate-500 whitespace-nowrap">{{ a.SUBMITTED_AT }}</td>
+        {% if role == 'admin' %}
+        <td class="p-4">
+          <div class="flex flex-col gap-1.5">
+            <select id="st-{{ a.applicant_name }}-{{ a._key }}" class="text-xs bg-slate-900 border border-slate-700 rounded px-2 py-1.5 text-white focus:outline-none focus:ring-1 focus:ring-[#2B54EA]">
+              <option class="bg-slate-900" {{ 'selected' if a.STATUS=='Under Review' }}>Under Review</option>
+              <option class="bg-slate-900" {{ 'selected' if a.STATUS=='Approved' }}>Approved</option>
+              <option class="bg-slate-900" {{ 'selected' if a.STATUS=='Rejected' }}>Rejected</option>
+            </select>
+            <button onclick="resolveApp('{{ a.applicant_name }}','{{ a._key }}')" class="bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold px-3 py-1.5 rounded transition-colors border border-slate-700 cursor-pointer">
+              Update
+            </button>
+          </div>
+        </td>
+        {% endif %}
+      </tr>
+      {% else %}
+      <tr><td colspan="7" class="p-8 text-center italic text-slate-500">No applications yet.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+async function submitApplication() {
+  const body = {
+    type: document.getElementById('app-type').value,
+    subject: document.getElementById('app-subject').value,
+    statement: document.getElementById('app-statement').value,
+  };
+  const res = await apiPost('applications/submit', body);
+  if (res) loadPage('applications');
+}
+async function resolveApp(username, key) {
+  const status = document.getElementById(`st-${username}-${key}`).value;
+  const res = await apiPost(`applications/${username}/${key}/resolve`, { status });
+  if (res) loadPage('applications');
+}
+</script>
+{% endblock %}

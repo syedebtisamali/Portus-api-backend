@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% set active_tab = 'badges' %}
+{% block title %}Badges{% endblock %}
+{% block content %}
+<h1 class="text-2xl font-extrabold mb-6">Badges & Awards</h1>
+
+{% if role == 'admin' %}
+<div class="bg-white rounded-2xl p-5 shadow-sm mb-6">
+  <h3 class="font-bold mb-3">Create a Badge</h3>
+  <div class="flex flex-wrap gap-3">
+    <input id="b-name" placeholder="Badge name" class="border border-periwinkle rounded-lg px-3 py-2 flex-1 min-w-[160px]">
+    <input id="b-desc" placeholder="Description" class="border border-periwinkle rounded-lg px-3 py-2 flex-1 min-w-[200px]">
+    <button onclick="createBadge()" class="bg-royal hover:bg-royaldark text-white font-semibold px-4 py-2 rounded-lg">Create</button>
+  </div>
+</div>
+
+<div class="bg-white rounded-2xl p-5 shadow-sm mb-6">
+  <h3 class="font-bold mb-3">Award / Revoke</h3>
+  <div class="flex flex-wrap gap-3 items-end">
+    <select id="a-user" class="border border-periwinkle rounded-lg px-3 py-2">
+      {% for u in all_users %}<option value="{{ u.USERNAME }}">{{ u.USERNAME }}</option>{% endfor %}
+    </select>
+    <select id="a-badge" class="border border-periwinkle rounded-lg px-3 py-2">
+      {% for b in all_badges %}<option value="{{ b.name }}">{{ b.name }}</option>{% endfor %}
+    </select>
+    <button onclick="awardBadge()" class="bg-green-600 hover:bg-green-700 text-white font-semibold px-4 py-2 rounded-lg">Award</button>
+    <button onclick="revokeBadge()" class="bg-red-500 hover:bg-red-600 text-white font-semibold px-4 py-2 rounded-lg">Revoke</button>
+  </div>
+</div>
+{% endif %}
+
+<div class="flex flex-wrap gap-3">
+  {% for b in all_badges %}
+  <div class="rounded-xl px-4 py-3 min-w-[160px] border {{ 'bg-royal text-white border-royal' if b.earned else 'bg-periwinkle/30 border-periwinkle text-charcoal/60' }}">
+    <p class="font-semibold text-sm">{{ b.name }}</p>
+    <p class="text-xs {{ 'text-periwinkle' if b.earned else 'text-charcoal/50' }}">{{ b.description }}</p>
+    {% if role != 'admin' %}<p class="text-[10px] mt-1 uppercase font-bold">{{ 'Earned' if b.earned else 'Locked' }}</p>{% endif %}
+  </div>
+  {% else %}
+  <p class="italic text-charcoal/50">No badges created yet.</p>
+  {% endfor %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+async function createBadge() {
+  const body = { name: document.getElementById('b-name').value, description: document.getElementById('b-desc').value };
+  const res = await apiPost('badges/create', body);
+  if (res) loadPage('badges');
+}
+async function awardBadge() {
+  const body = { username: document.getElementById('a-user').value, badge_name: document.getElementById('a-badge').value };
+  const res = await apiPost('badges/award', body);
+  if (res) loadPage('badges');
+}
+async function revokeBadge() {
+  const body = { username: document.getElementById('a-user').value, badge_name: document.getElementById('a-badge').value };
+  const res = await apiPost('badges/revoke', body);
+  if (res) loadPage('badges');
+}
+</script>
+{% endblock %}
