@@ -1,0 +1,52 @@
+[
+  {
+    "USERNAME": "admin",
+    "PASSWORD": "admin123",
+    "ROLE": "admin",
+    "POSITION": "Community Lead",
+    "IS_ACTIVE": true,
+    "JOINED_AT": "01-01-2026 09:00",
+    "LAST_ACTIVE": "01-01-2026 09:00",
+    "PROFILE": { "BIO": "Founding administrator of Portus.", "GITHUB": "", "LINKEDIN": "", "WEBSITE": "", "PHONE": "" },
+    "ATTENDANCE": {},
+    "APPLICATION": {},
+    "CONTRIBUTIONS": {},
+    "EXPERIENCE": {},
+    "BADGES": ["Founding Member"],
+    "REPORTS": {}
+  },
+  {
+    "USERNAME": "sarah",
+    "PASSWORD": "sarah123",
+    "ROLE": "user",
+    "POSITION": "Frontend Volunteer",
+    "IS_ACTIVE": true,
+    "JOINED_AT": "05-01-2026 14:00",
+    "LAST_ACTIVE": "05-01-2026 14:00",
+    "PROFILE": { "BIO": "Loves building accessible UIs.", "GITHUB": "sarahdev", "LINKEDIN": "", "WEBSITE": "", "PHONE": "" },
+    "ATTENDANCE": {
+      "ATT1": { "SESSION_NAME": "Weekly Sync #1", "DATE": "07-01-2026 18:00", "STATUS": "Present", "MARKED_BY": "admin" }
+    },
+    "APPLICATION": {},
+    "CONTRIBUTIONS": {
+      "C1": { "TITLE": "Redesigned login page", "DESCRIPTION": "Improved contrast and mobile layout.", "LINK": "", "STATUS": "Pending", "SUBMITTED_AT": "08-01-2026 10:00" }
+    },
+    "EXPERIENCE": {},
+    "BADGES": [],
+    "REPORTS": {}
+  },
+  {
+    "USERNAME": "_NEWS_BOARD",
+    "POSTS": {
+      "N1": { "TITLE": "Welcome to Portus!", "CONTENT": "This is the community bulletin board. Admins can post updates here.", "AUTHOR": "admin", "CREATED_AT": "01-01-2026 09:05" }
+    }
+  },
+  {
+    "USERNAME": "_BADGES_CATALOG",
+    "CATALOG": {
+      "Founding Member": "Joined during Portus's early days.",
+      "Top Contributor": "Recognized for outstanding contributions.",
+      "Perfect Attendance": "Attended every session in a quarter."
+    }
+  }
+]
